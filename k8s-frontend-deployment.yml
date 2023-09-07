@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dgdp-frontend-nginx
+  namespace: dgdp-core-system
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      k8s-app: dgdp-frontend-nginx
+  template:
+    metadata:
+      labels:
+        k8s-app: dgdp-frontend-nginx
+    spec:
+      containers:
+        - name: dgdp-frontend-nginx
+          image: registry.dgdp.com:5000/nginx:v1
+          imagePullPolicy: IfNotPresent
+      restartPolicy: Always
+      imagePullSecrets:
+        - name: dgdpsecret
+      volumes:
+        - name: frontend-nginx
+          configMap:
+            name: frontend-nginx			
+---			
+kind: Service
+apiVersion: v1
+metadata:
+  name: dgdp-frontend-nginx
+  namespace: dgdp-core-system
+  labels:
+    k8s-app: dgdp-frontend-nginx
+spec:
+  ports:
+    - name: tcp-80-80-cjdrh
+      protocol: TCP
+      port: 80
+      targetPort: 80
+      nodePort: 30015
+  selector:
+    k8s-app: dgdp-frontend-nginx
+  type: LoadBalancer
+  externalIPs:
+    - 10.103.15.51
+    

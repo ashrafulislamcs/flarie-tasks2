@@ -1,0 +1,61 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend-automation
+  namespace: dgdp-core-system
+  labels:
+    k8s-app: backend-automation
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      k8s-app: backend-automation
+  template:
+    metadata:
+      name: backend-automation
+      labels:
+        k8s-app: backend-automation
+    spec:
+      volumes:
+        - name: storage
+          persistentVolumeClaim:
+            claimName: task-pv-claim
+        - name: custom-resolv-conf
+          configMap:
+            name: custom-resolv-conf
+            defaultMode: 420
+      containers:
+        - name: backend-automation
+          image: registry.dpdg.com:5000/backend-automation:tagVersion
+          resources:
+            requests:
+              cpu: '3'
+              memory: 8Gi
+          imagePullPolicy: IfNotPresent
+          volumeMounts:
+            - name: storage
+              mountPath: /dgdp-bucket-stage
+            - name: custom-resolv-conf
+              mountPath: /etc/resolv.conf
+              subPath: resolv.conf
+      restartPolicy: Always
+      imagePullSecrets:
+        - name: dgdpsecret
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend-automation
+  namespace: dgdp-core-system
+  labels:
+    k8s-app: backend-automation
+spec:
+  ports:
+    - name: tcp-9017-9017-psc6v
+      protocol: TCP
+      port: 9017
+      targetPort: 9017
+      nodePort: 32020
+  selector:
+    k8s-app: backend-automation
+  type: NodePort
